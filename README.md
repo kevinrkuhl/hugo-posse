@@ -4,7 +4,9 @@ A Python utility that automatically syndicates [Hugo](https://gohugo.io) blog po
 
 It implements the [POSSE](https://indieweb.org/POSSE) (Publish on Own Site, Syndicate Elsewhere) philosophy by parsing your local front matter and posting to social platforms (Bluesky, Mastodon) only when you tell it to.
 
-[**Read the blog post regarding the theory behind this script.**](https://www.kevinrkuhl.com/blog/2025/12/posse-for-hugo-part-one-theory/)
+Here are some blogposts dicussing the theory and how I use the script:
+* [POSSE for Hugo Part 1 - Theory](https://www.kevinrkuhl.com/blog/2025/12/posse-for-hugo-part-one-theory/)
+* [POSSE for Hugo Part 2 - The Product](https://www.kevinrkuhl.com/blog/2025/12/posse-for-hugo-pt2/)
 
 ## Features
 
@@ -82,7 +84,7 @@ microblog_content: "This is the text that will appear on social media. 🤖"
 syndicated: false
 ```
 
-### 2. Run the Script
+### 2. Run the script
 
 Navigate into the hugo-posse directory and run the script:
 
@@ -112,6 +114,11 @@ Some ideas for extending this utility include:
 * Support for other SSGs and Obsidian.
 
 Feel free to modify it to support your environment!
+
+## Known issues
+
+* The script will fail to parse front matter if it the delimiter is not the first line in your file. I'll be workign on a fix for this shortly.
+* Bluesky handles hashtags as metadata, so I plan on adding a method to parse and extract hashtags for Bluesky.
 
 ## License
 
