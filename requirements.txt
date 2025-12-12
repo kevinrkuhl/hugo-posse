@@ -1,0 +1,5 @@
+atproto
+Mastodon.py
+python-dotenv
+PyYAML
+requests
