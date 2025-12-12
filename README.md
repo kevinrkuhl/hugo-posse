@@ -81,7 +81,6 @@ Add the following fields to your post's front matter:
 ```yaml
 syndicate_to: ["bluesky", "mastodon"]
 microblog_content: "This is the text that will appear on social media. 🤖"
-syndicated: false
 ```
 
 ### 2. Run the script
