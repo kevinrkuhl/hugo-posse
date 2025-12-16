@@ -109,7 +109,7 @@ def truncate_text(title, content, limit, suffix=""):
     parts = [title]
     if final_content:
         parts.append(final_content)
-    if forced_suffix:
+    if suffix:
         parts.append(forced_suffix)
         
     return "\n\n".join(parts)
