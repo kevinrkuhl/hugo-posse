@@ -5,7 +5,8 @@ import tomllib
 import yaml
 import argparse
 import logging
-import requests 
+import requests
+import re 
 
 # Suppress pydantic warnings from ATProto
 warnings.filterwarnings("ignore", module="pydantic")
@@ -113,6 +114,26 @@ def truncate_text(title, content, limit, suffix=""):
         parts.append(forced_suffix)
         
     return "\n\n".join(parts)
+
+def parse_to_bluesky_richtext(text):
+    """
+    Parses a string, and returns a TextBuilder object with active hashtags and links.
+    """
+    builder = client_utils.TextBuilder()
+    pattern = r'(https?://\S+|#[a-zA-Z0-9_]+)'
+    parts = re.split(pattern, text)
+
+    for part in parts:
+        if not part: continue
+
+        if part.startswith("https"):
+            builder.link(part, part)
+        elif part.startswith("#"):
+            builder.hashtag(part[1:])
+        else:
+            builder.text(part))
+    
+    return builder
 
 # --- Syndication ---
 def syndicate_to_bluesky(client, frontmatter, url):
