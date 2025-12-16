@@ -134,7 +134,7 @@ def parse_to_bluesky_richtext(text):
                 builder.text(trailing_punct)
 
         elif part.startswith("#"):
-            builder.tag(part[1:])
+            builder.tag(part, part[1:])
         else:
             builder.text(part)
     
