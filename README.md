@@ -116,7 +116,7 @@ Feel free to modify it to support your environment!
 
 ## Known issues
 
-* The script will fail to parse front matter if the delimiter (`---`/`+++`) is not the first line in your file. I'll be workign on a fix for this shortly.
+* The script will fail to parse front matter if the delimiter (`---`/`+++`) is not the first line in your file. I'll be working on a fix for this shortly.
 
 ## License
 
