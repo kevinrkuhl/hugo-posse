@@ -90,18 +90,29 @@ def verify_url_accessible(url):
         logging.error(f"Connection failed for {url}: {e}")
         return False
 
-def truncate_text(title, content, limit):
-    """Generic truncation helper."""
-    base_len = len(title) + 2 
-    available_chars = limit - base_len
+def truncate_text(title, content, limit, suffix=""):
+    """Truncates content ot fit limits, ensuring suffix is never chopped (for Mastodon)."""
+    suffix_padding = 2 if suffix else 0
+    reserved_chars = len(title) + 2 + len(suffix) + suffix_padding 
+    available_chars = limit - reserved_chars
     
     if available_chars <= 0:
-        return f"{title[:limit-3]}..."
+        return f"{title[:limit-len(forced_suffix)-5]}... {forced_suffix}"
         
-    if content and len(content) > available_chars:
-        return f"{title}\n\n{content[:available_chars-3]}..."
+    final_content = ""
+    if content:
+        if len(content) > available_chars:
+            final_content = f"{content[:available_chars-3]}..."
+        else:
+            final_content = content
     
-    return f"{title}\n\n{content}" if content else title
+    parts = [title]
+    if final_content:
+        parts.append(final_content)
+    if forced_suffix:
+        parts.append(forced_suffix)
+        
+    return "\n\n".join(parts)
 
 # --- Syndication ---
 def syndicate_to_bluesky(client, frontmatter, url):
