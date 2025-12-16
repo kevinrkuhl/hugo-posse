@@ -116,8 +116,7 @@ Feel free to modify it to support your environment!
 
 ## Known issues
 
-* The script will fail to parse front matter if it the delimiter is not the first line in your file. I'll be workign on a fix for this shortly.
-* Bluesky handles hashtags as metadata, so I plan on adding a method to parse and extract hashtags for Bluesky.
+* The script will fail to parse front matter if the delimiter (`---`/`+++`) is not the first line in your file. I'll be workign on a fix for this shortly.
 
 ## License
 
