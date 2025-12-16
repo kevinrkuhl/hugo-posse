@@ -5,14 +5,15 @@ import tomllib
 import yaml
 import argparse
 import logging
-import requests 
+import requests
+import re 
 
 # Suppress pydantic warnings from ATProto
 warnings.filterwarnings("ignore", module="pydantic")
 warnings.filterwarnings("ignore", message=".*The 'default' attribute with value None.*")
 
 from dotenv import load_dotenv
-from atproto import Client, models
+from atproto import Client, models, client_utils
 from mastodon import Mastodon
 
 # --- CONFIGURATION ---
@@ -90,18 +91,54 @@ def verify_url_accessible(url):
         logging.error(f"Connection failed for {url}: {e}")
         return False
 
-def truncate_text(title, content, limit):
-    """Generic truncation helper."""
-    base_len = len(title) + 2 
-    available_chars = limit - base_len
+def truncate_text(title, content, limit, suffix=""):
+    """Truncates content to fit limits, ensuring suffix is never chopped (for Mastodon)."""
+    suffix_padding = 2 if suffix else 0
+    reserved_chars = len(title) + 2 + len(suffix) + suffix_padding 
+    available_chars = limit - reserved_chars
     
     if available_chars <= 0:
-        return f"{title[:limit-3]}..."
+        return f"{title[:limit-len(suffix)-5]}... {suffix}"
         
-    if content and len(content) > available_chars:
-        return f"{title}\n\n{content[:available_chars-3]}..."
+    final_content = ""
+    if content:
+        if len(content) > available_chars:
+            final_content = f"{content[:available_chars-3]}..."
+        else:
+            final_content = content
     
-    return f"{title}\n\n{content}" if content else title
+    parts = [title]
+    if final_content:
+        parts.append(final_content)
+    if suffix:
+        parts.append(suffix)
+        
+    return "\n\n".join(parts)
+
+def parse_to_bluesky_richtext(text):
+    """
+    Parses a string, and returns a TextBuilder object with active hashtags and links.
+    """
+    builder = client_utils.TextBuilder()
+    pattern = r'(https?://\S+|#[a-zA-Z0-9_]+)'
+    parts = re.split(pattern, text)
+
+    for part in parts:
+        if not part: continue
+
+        if part.startswith("https"):
+            clean_url = part.rstrip(".,!?;")
+            trailing_punct = part[len(clean_url):]
+            builder.link(clean_url, clean_url)
+            if trailing_punct:
+                builder.text(trailing_punct)
+
+        elif part.startswith("#"):
+            builder.tag(part, part[1:])
+        else:
+            builder.text(part)
+    
+    return builder
 
 # --- Syndication ---
 def syndicate_to_bluesky(client, frontmatter, url):
@@ -110,7 +147,8 @@ def syndicate_to_bluesky(client, frontmatter, url):
     title = frontmatter.get("title", "New Post")
     text_content = frontmatter.get("microblog_content", "")
     
-    post_text = truncate_text(title, text_content, BSKY_CHAR_LIMIT)
+    raw_text = truncate_text(title, text_content, BSKY_CHAR_LIMIT)
+    rich_text = parse_to_bluesky_richtext(raw_text)
     
     external = models.AppBskyEmbedExternal.External(
         title=title,
@@ -121,7 +159,7 @@ def syndicate_to_bluesky(client, frontmatter, url):
     embed_card = models.AppBskyEmbedExternal.Main(external=external)
     
     try:
-        client.send_post(text=post_text, embed=embed_card)
+        client.send_post(text=rich_text, embed=embed_card)
         logging.info(f"✅ Bluesky: Posted '{title}'")
         return True
     except Exception as e:
@@ -136,12 +174,10 @@ def syndicate_to_mastodon(client, frontmatter, url):
     
     # Reserve chars for the URL
     limit = MASTODON_CHAR_LIMIT - len(url) - 2
-    post_text = truncate_text(title, text_content, limit)
+    post_text = truncate_text(title, text_content, limit, suffix=url)
     
-    final_text = f"{post_text}\n\n{url}"
-
     try:
-        client.status_post(status=final_text)
+        client.status_post(status=post_text)
         logging.info(f"✅ Mastodon: Posted '{title}'")
         return True
     except Exception as e:
